@@ -211,6 +211,31 @@
   background: #27ae60;
 }
 
+.owner-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.btn-secondary {
+  width: 100%;
+  padding: 1rem;
+  background: #e2e8f0;
+  color: #1e293b;
+  border: none;
+  border-radius: 5px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  text-align: center;
+  transition: background 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background: #cbd5f5;
+}
+
 .course-includes {
   margin-top: 2rem;
   padding-top: 2rem;

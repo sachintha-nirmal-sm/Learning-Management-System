@@ -36,6 +36,27 @@ const courseService = {
     const response = await api.get('/courses/instructor/my-courses');
     return response.data;
   },
+
+  // Lecture management
+  addLecture: async (courseId, lectureData) => {
+    const response = await api.post(`/courses/${courseId}/lectures`, lectureData);
+    return response.data;
+  },
+
+  updateLecture: async (courseId, lectureId, lectureData) => {
+    const response = await api.put(`/courses/${courseId}/lectures/${lectureId}`, lectureData);
+    return response.data;
+  },
+
+  deleteLecture: async (courseId, lectureId) => {
+    const response = await api.delete(`/courses/${courseId}/lectures/${lectureId}`);
+    return response.data;
+  },
+
+  publishCourse: async (courseId) => {
+    const response = await api.put(`/courses/${courseId}/publish`);
+    return response.data;
+  },
 };
 
 export default courseService;

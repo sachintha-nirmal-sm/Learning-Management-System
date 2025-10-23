@@ -38,6 +38,7 @@ import StudentDashboard from './pages/StudentDashboard';
 import InstructorDashboard from './pages/InstructorDashboard';
 import CreateCourse from './pages/CreateCourse';
 import CourseDetail from './pages/CourseDetail';
+import ManageLectures from './pages/ManageLectures';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import './styles/App.css';
 
@@ -79,6 +80,14 @@ function App() {
                   <CreateCourse />
                 </ProtectedRoute>
               } 
+            />
+            <Route
+              path="/instructor/courses/:courseId/lectures"
+              element={
+                <ProtectedRoute requireInstructor={true}>
+                  <ManageLectures />
+                </ProtectedRoute>
+              }
             />
           </Routes>
         </div>

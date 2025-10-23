@@ -31,7 +31,7 @@ const InstructorDashboard = () => {
     if (window.confirm('Are you sure you want to delete this course?')) {
       try {
         await courseService.deleteCourse(courseId);
-        setCourses(courses.filter(course => course._id !== courseId));
+  setCourses(prev => prev.filter(course => course._id !== courseId));
       } catch (err) {
         alert('Failed to delete course');
         console.error(err);
@@ -41,9 +41,10 @@ const InstructorDashboard = () => {
 
   const getFilteredCourses = () => {
     if (filter === 'published') {
-      return courses.filter(c => c.isPublished);
-    } else if (filter === 'draft') {
-      return courses.filter(c => !c.isPublished);
+      return courses.filter(c => c.status === 'published');
+    }
+    if (filter === 'draft') {
+      return courses.filter(c => c.status !== 'published');
     }
     return courses;
   };
@@ -52,10 +53,14 @@ const InstructorDashboard = () => {
 
   const calculateStats = () => {
     const totalCourses = courses.length;
-    const publishedCourses = courses.filter(c => c.isPublished).length;
-    const draftCourses = courses.filter(c => !c.isPublished).length;
+    const publishedCourses = courses.filter(c => c.status === 'published').length;
+    const draftCourses = courses.filter(c => c.status !== 'published').length;
     const totalStudents = courses.reduce((sum, c) => sum + (c.enrolledStudents?.length || 0), 0);
-    const totalRevenue = courses.reduce((sum, c) => sum + (c.price * (c.enrolledStudents?.length || 0)), 0);
+    const totalRevenue = courses.reduce((sum, c) => {
+      const price = Number(c.price) || 0;
+      const students = c.enrolledStudents?.length || 0;
+      return sum + price * students;
+    }, 0);
 
     return { totalCourses, publishedCourses, draftCourses, totalStudents, totalRevenue };
   };

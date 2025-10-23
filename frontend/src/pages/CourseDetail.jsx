@@ -137,9 +137,14 @@ const CourseDetail = () => {
             )}
 
             {isOwner ? (
-              <Link to={`/instructor/edit-course/${course._id}`} className="btn-enroll">
-                Edit Course
-              </Link>
+              <div className="owner-actions">
+                <Link to={`/instructor/edit-course/${course._id}`} className="btn-enroll">
+                  Edit Course
+                </Link>
+                <Link to={`/instructor/courses/${course._id}/lectures`} className="btn-secondary">
+                  Manage Lectures
+                </Link>
+              </div>
             ) : isEnrolled ? (
               <Link to="/my-courses" className="btn-enrolled">
                 ✓ Enrolled - Go to My Learning
@@ -274,7 +279,7 @@ const CourseDetail = () => {
                           {lecture.duration && (
                             <span className="lecture-duration">⏱️ {lecture.duration} min</span>
                           )}
-                          {lecture.isFree && (
+                          {lecture.isPreview && (
                             <span className="lecture-free">Free Preview</span>
                           )}
                         </div>

@@ -6,14 +6,20 @@ import '../../styles/InstructorCourseCard.css';
 const InstructorCourseCard = ({ course, onDelete, onUpdate }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const price = Number(course.price) || 0;
 
   const handlePublishToggle = async () => {
     try {
       setPublishing(true);
-      await courseService.updateCourse(course._id, {
-        isPublished: !course.isPublished
-      });
-      onUpdate();
+
+      if (course.status === 'published') {
+        await courseService.updateCourse(course._id, { status: 'draft' });
+      } else {
+        await courseService.publishCourse(course._id);
+      }
+
+      setShowMenu(false);
+      await onUpdate();
     } catch (err) {
       alert('Failed to update course status');
       console.error(err);
@@ -33,7 +39,7 @@ const InstructorCourseCard = ({ course, onDelete, onUpdate }) => {
           </div>
         )}
         <div className="course-badge">
-          {course.isPublished ? (
+          {course.status === 'published' ? (
             <span className="badge-published">✓ Published</span>
           ) : (
             <span className="badge-draft">Draft</span>
@@ -53,10 +59,18 @@ const InstructorCourseCard = ({ course, onDelete, onUpdate }) => {
             </button>
             {showMenu && (
               <div className="dropdown-menu">
-                <Link to={`/instructor/edit-course/${course._id}`} className="menu-item">
+                <Link
+                  to={`/instructor/edit-course/${course._id}`}
+                  className="menu-item"
+                  onClick={() => setShowMenu(false)}
+                >
                   ✏️ Edit Course
                 </Link>
-                <Link to={`/instructor/course/${course._id}/lectures`} className="menu-item">
+                <Link
+                  to={`/instructor/courses/${course._id}/lectures`}
+                  className="menu-item"
+                  onClick={() => setShowMenu(false)}
+                >
                   📖 Manage Lectures
                 </Link>
                 <button 
@@ -64,11 +78,14 @@ const InstructorCourseCard = ({ course, onDelete, onUpdate }) => {
                   className="menu-item"
                   disabled={publishing}
                 >
-                  {course.isPublished ? '📝 Unpublish' : '✅ Publish'}
+                  {course.status === 'published' ? '📝 Unpublish' : '✅ Publish'}
                 </button>
                 <div className="menu-divider"></div>
                 <button 
-                  onClick={() => onDelete(course._id)} 
+                  onClick={() => {
+                    setShowMenu(false);
+                    onDelete(course._id);
+                  }} 
                   className="menu-item delete"
                 >
                   🗑️ Delete Course
@@ -97,14 +114,14 @@ const InstructorCourseCard = ({ course, onDelete, onUpdate }) => {
 
         <div className="course-footer">
           <div className="course-price">
-            {course.price === 0 ? (
+            {price === 0 ? (
               <span className="price-free">Free</span>
             ) : (
-              <span className="price">${course.price}</span>
+              <span className="price">${price}</span>
             )}
           </div>
           <div className="course-revenue">
-            Revenue: ${((course.price || 0) * (course.enrolledStudents?.length || 0)).toFixed(2)}
+            Revenue: ${(price * (course.enrolledStudents?.length || 0)).toFixed(2)}
           </div>
         </div>
 
