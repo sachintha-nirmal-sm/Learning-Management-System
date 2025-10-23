@@ -236,6 +236,64 @@ exports.getInstructorCourses = async (req, res) => {
   }
 };
 
+// @desc    Get courses pending review (admin)
+// @route   GET /api/courses/admin/pending
+// @access  Private (Admin)
+exports.getPendingCourses = async (req, res) => {
+  try {
+    const courses = await Course.find({ status: 'pending' })
+      .populate('instructor', 'name email')
+      .sort({ updatedAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: courses.length,
+      courses
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Submit course for admin review
+// @route   PUT /api/courses/:id/submit
+// @access  Private (Instructor/Admin)
+exports.submitCourseForReview = async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id);
+
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    if (course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    if (course.status === 'published') {
+      return res.status(400).json({ message: 'Course is already published' });
+    }
+
+    if (!course.lectures?.length) {
+      return res.status(400).json({ message: 'Add at least one lecture before submitting for review' });
+    }
+
+    course.status = 'pending';
+    course.reviewNotes = undefined;
+    course.reviewedBy = undefined;
+    course.reviewedAt = undefined;
+    await course.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Course submitted for review',
+      course
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @desc    Add lecture to course
 // @route   POST /api/courses/:id/lectures
 // @access  Private (Instructor/Admin)
@@ -491,9 +549,9 @@ exports.addReview = async (req, res) => {
   }
 };
 
-// @desc    Publish course
-// @route   PUT /api/courses/:id/publish
-// @access  Private (Instructor/Admin)
+// @desc    Approve and publish course
+// @route   PUT /api/courses/:id/approve
+// @access  Private (Admin)
 exports.publishCourse = async (req, res) => {
   try {
     const course = await Course.findById(req.params.id);
@@ -502,17 +560,54 @@ exports.publishCourse = async (req, res) => {
       return res.status(404).json({ message: 'Course not found' });
     }
 
-    // Check authorization
-    if (course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    if (req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
+    if (course.status === 'published') {
+      return res.status(400).json({ message: 'Course is already published' });
+    }
+
     course.status = 'published';
+    course.reviewNotes = req.body.reviewNotes;
+    course.reviewedBy = req.user._id;
+    course.reviewedAt = new Date();
     await course.save();
 
     res.status(200).json({
       success: true,
-      message: 'Course published successfully',
+      message: 'Course approved and published successfully',
+      course
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Reject course
+// @route   PUT /api/courses/:id/reject
+// @access  Private (Admin)
+exports.rejectCourse = async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id);
+
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    course.status = 'rejected';
+    course.reviewNotes = req.body.reviewNotes || 'Course rejected';
+    course.reviewedBy = req.user._id;
+    course.reviewedAt = new Date();
+    await course.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Course rejected successfully',
       course
     });
   } catch (error) {

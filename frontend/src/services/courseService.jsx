@@ -58,8 +58,23 @@ const courseService = {
     return response.data;
   },
 
-  publishCourse: async (courseId) => {
-    const response = await api.put(`/courses/${courseId}/publish`);
+  submitForReview: async (courseId) => {
+    const response = await api.put(`/courses/${courseId}/submit`);
+    return response.data;
+  },
+
+  approveCourse: async (courseId, payload = {}) => {
+    const response = await api.put(`/courses/${courseId}/approve`, payload);
+    return response.data;
+  },
+
+  rejectCourse: async (courseId, payload = {}) => {
+    const response = await api.put(`/courses/${courseId}/reject`, payload);
+    return response.data;
+  },
+
+  getPendingCourses: async () => {
+    const response = await api.get('/courses/admin/pending');
     return response.data;
   },
 };

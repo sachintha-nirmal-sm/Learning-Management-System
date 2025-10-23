@@ -5,28 +5,51 @@ import '../../styles/InstructorCourseCard.css';
 
 const InstructorCourseCard = ({ course, onDelete, onUpdate }) => {
   const [showMenu, setShowMenu] = useState(false);
-  const [publishing, setPublishing] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
   const price = Number(course.price) || 0;
 
-  const handlePublishToggle = async () => {
+  const statusBadge = () => {
+    switch (course.status) {
+      case 'published':
+        return <span className="badge-published">✓ Published</span>;
+      case 'pending':
+        return <span className="badge-pending">🔍 In Review</span>;
+      case 'rejected':
+        return <span className="badge-rejected">⚠ Needs Updates</span>;
+      default:
+        return <span className="badge-draft">Draft</span>;
+    }
+  };
+
+  const handleSubmitForReview = async () => {
     try {
-      setPublishing(true);
-
-      if (course.status === 'published') {
-        await courseService.updateCourse(course._id, { status: 'draft' });
-      } else {
-        await courseService.publishCourse(course._id);
-      }
-
+      setActionLoading(true);
+      await courseService.submitForReview(course._id);
       setShowMenu(false);
       await onUpdate();
     } catch (err) {
-      alert('Failed to update course status');
+      alert(err.response?.data?.message || 'Failed to submit course for review');
       console.error(err);
     } finally {
-      setPublishing(false);
+      setActionLoading(false);
     }
   };
+
+  const handleMoveToDraft = async () => {
+    try {
+      setActionLoading(true);
+      await courseService.updateCourse(course._id, { status: 'draft' });
+      setShowMenu(false);
+      await onUpdate();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update course status');
+      console.error(err);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const canSubmitForReview = ['draft', 'rejected'].includes(course.status);
 
   return (
     <div className="instructor-course-card">
@@ -38,34 +61,21 @@ const InstructorCourseCard = ({ course, onDelete, onUpdate }) => {
             <span>📚</span>
           </div>
         )}
-        <div className="course-badge">
-          {course.status === 'published' ? (
-            <span className="badge-published">✓ Published</span>
-          ) : (
-            <span className="badge-draft">Draft</span>
-          )}
-        </div>
+        <div className="course-badge">{statusBadge()}</div>
       </div>
 
       <div className="course-content">
         <div className="course-header">
           <h3 className="course-title">{course.title}</h3>
           <div className="course-menu">
-            <button 
+            <button
               className="menu-btn"
-              onClick={() => setShowMenu(!showMenu)}
+              onClick={() => setShowMenu((prev) => !prev)}
             >
               ⋮
             </button>
             {showMenu && (
               <div className="dropdown-menu">
-                <Link
-                  to={`/instructor/edit-course/${course._id}`}
-                  className="menu-item"
-                  onClick={() => setShowMenu(false)}
-                >
-                  ✏️ Edit Course
-                </Link>
                 <Link
                   to={`/instructor/courses/${course._id}/lectures`}
                   className="menu-item"
@@ -73,44 +83,79 @@ const InstructorCourseCard = ({ course, onDelete, onUpdate }) => {
                 >
                   📖 Manage Lectures
                 </Link>
-                <button 
-                  onClick={handlePublishToggle} 
-                  className="menu-item"
-                  disabled={publishing}
-                >
-                  {course.status === 'published' ? '📝 Unpublish' : '✅ Publish'}
-                </button>
-                <div className="menu-divider"></div>
-                <button 
+                {course.status === 'published' && (
+                  <button
+                    onClick={handleMoveToDraft}
+                    className="menu-item"
+                    disabled={actionLoading}
+                  >
+                    📝 Unpublish
+                  </button>
+                )}
+                {course.status === 'pending' ? (
+                  <button
+                    onClick={handleMoveToDraft}
+                    className="menu-item"
+                    disabled={actionLoading}
+                  >
+                    ↩ Move back to draft
+                  </button>
+                ) : canSubmitForReview ? (
+                  <button
+                    onClick={handleSubmitForReview}
+                    className="menu-item"
+                    disabled={actionLoading}
+                  >
+                    ✅ Submit for review
+                  </button>
+                ) : null}
+                <div className="menu-divider" />
+                <button
                   onClick={() => {
                     setShowMenu(false);
                     onDelete(course._id);
-                  }} 
+                  }}
                   className="menu-item delete"
+                  disabled={actionLoading}
                 >
-                  🗑️ Delete Course
+                  🗑 Delete Course
                 </button>
               </div>
             )}
           </div>
         </div>
 
-        <p className="course-category">{course.category}</p>
+        <p className="course-description">{course.description}</p>
 
         <div className="course-stats">
-          <div className="stat-item">
-            <span className="stat-icon">👥</span>
-            <span>{course.enrolledStudents?.length || 0} students</span>
-          </div>
           <div className="stat-item">
             <span className="stat-icon">📖</span>
             <span>{course.lectures?.length || 0} lectures</span>
           </div>
           <div className="stat-item">
             <span className="stat-icon">⭐</span>
-            <span>{course.ratings?.average?.toFixed(1) || '0.0'} ({course.ratings?.count || 0})</span>
+            <span>
+              {course.ratings?.average?.toFixed(1) || '0.0'} ({course.ratings?.count || 0})
+            </span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-icon">👥</span>
+            <span>{course.enrolledStudents?.length || 0} students</span>
           </div>
         </div>
+
+        {course.status === 'rejected' && course.reviewNotes && (
+          <div className="course-alert">
+            <strong>Reviewer feedback:</strong>
+            <p>{course.reviewNotes}</p>
+          </div>
+        )}
+
+        {course.status === 'pending' && (
+          <div className="course-alert info">
+            <p>Your course is currently under review.</p>
+          </div>
+        )}
 
         <div className="course-footer">
           <div className="course-price">
@@ -126,14 +171,11 @@ const InstructorCourseCard = ({ course, onDelete, onUpdate }) => {
         </div>
 
         <div className="card-actions">
-          <Link 
-            to={`/courses/${course._id}`} 
-            className="btn-view"
-          >
+          <Link to={`/courses/${course._id}`} className="btn-view">
             View Course
           </Link>
-          <Link 
-            to={`/instructor/course/${course._id}/analytics`} 
+          <Link
+            to={`/instructor/course/${course._id}/analytics`}
             className="btn-analytics"
           >
             📊 Analytics

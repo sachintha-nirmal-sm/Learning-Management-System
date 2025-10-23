@@ -21,6 +21,10 @@ exports.enrollCourse = async (req, res) => {
       return res.status(400).json({ message: 'Course is not available for enrollment' });
     }
 
+    if (course.price > 0) {
+      return res.status(400).json({ message: 'This is a paid course. Please complete the payment to enroll.' });
+    }
+
     // Check if already enrolled
     const existingEnrollment = await Enrollment.findOne({
       student: studentId,
