@@ -1,12 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import courseService from '../services/courseService';
 import enrollmentService from '../services/enrollmentService';
 import '../styles/CoursePlayer.css';
 
 const CoursePlayer = () => {
   const { courseId } = useParams();
-  const navigate = useNavigate();
   const [course, setCourse] = useState(null);
   const [enrollment, setEnrollment] = useState(null);
   const [activeLectureId, setActiveLectureId] = useState(null);
@@ -22,7 +21,7 @@ const CoursePlayer = () => {
         setCourse(data.course);
         setEnrollment(data.enrollment);
         if (Array.isArray(data.course.lectures) && data.course.lectures.length > 0) {
-          setActiveLectureId(data.course.lectures[0]._id);
+          setActiveLectureId(data.course.lectures[0]._id?.toString());
         }
       } catch (err) {
         const message = err.response?.data?.message || 'Unable to load course content.';
@@ -39,13 +38,14 @@ const CoursePlayer = () => {
     if (!course || !Array.isArray(course.lectures)) {
       return null;
     }
-    return course.lectures.find((lecture) => lecture._id === activeLectureId) || null;
+  return course.lectures.find((lecture) => lecture._id?.toString() === activeLectureId) || null;
   }, [course, activeLectureId]);
 
   const completedLectures = useMemo(() => {
-    return new Set(enrollment?.completedLectures || []);
+  return new Set((enrollment?.completedLectures || []).map((id) => id.toString()));
   }, [enrollment]);
 
+  const canTrackProgress = Boolean(enrollment?.id);
   const progressPercent = enrollment?.percentageCompleted || enrollment?.progress || 0;
 
   const handleCompleteLecture = async (lectureId) => {
@@ -123,13 +123,17 @@ const CoursePlayer = () => {
                     <span className="lecture-duration">⏱ {activeLecture.duration} minutes</span>
                   )}
                 </div>
-                <button
-                  className="btn-complete"
-                  onClick={() => handleCompleteLecture(activeLecture._id)}
-                  disabled={completedLectures.has(activeLecture._id) || completing}
-                >
-                  {completedLectures.has(activeLecture._id) ? 'Completed' : completing ? 'Marking...' : 'Mark as Complete'}
-                </button>
+                {canTrackProgress ? (
+                  <button
+                    className="btn-complete"
+                    onClick={() => handleCompleteLecture(activeLecture._id?.toString())}
+                    disabled={completedLectures.has(activeLecture._id?.toString()) || completing}
+                  >
+                    {completedLectures.has(activeLecture._id?.toString()) ? 'Completed' : completing ? 'Marking...' : 'Mark as Complete'}
+                  </button>
+                ) : (
+                  <span className="progress-hint">Progress tracking is only available to enrolled students.</span>
+                )}
               </div>
 
               {activeLecture.description && (
@@ -166,15 +170,16 @@ const CoursePlayer = () => {
 
           <div className="curriculum-list">
             {course.lectures?.map((lecture, index) => {
-              const completed = completedLectures.has(lecture._id);
-              const isActive = lecture._id === activeLectureId;
+              const lectureId = lecture._id?.toString();
+              const completed = completedLectures.has(lectureId);
+              const isActive = lectureId === activeLectureId;
 
               return (
                 <button
                   key={lecture._id}
                   type="button"
                   className={`curriculum-item ${isActive ? 'active' : ''} ${completed ? 'completed' : ''}`}
-                  onClick={() => setActiveLectureId(lecture._id)}
+                  onClick={() => setActiveLectureId(lectureId)}
                 >
                   <div className="lecture-index">{index + 1}</div>
                   <div className="lecture-info">

@@ -39,6 +39,9 @@ import InstructorDashboard from './pages/InstructorDashboard';
 import CreateCourse from './pages/CreateCourse';
 import CourseDetail from './pages/CourseDetail';
 import ManageLectures from './pages/ManageLectures';
+import CoursePlayer from './pages/CoursePlayer';
+import AdminDashboard from './pages/AdminDashboard';
+import PaymentSuccess from './pages/PaymentSuccess';
 import Profile from './pages/Profile';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import './styles/App.css';
@@ -55,10 +58,26 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/courses/:id" element={<CourseDetail />} />
             <Route
+              path="/learn/:courseId"
+              element={
+                <ProtectedRoute>
+                  <CoursePlayer />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/profile"
               element={
                 <ProtectedRoute>
                   <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/payment-success"
+              element={
+                <ProtectedRoute>
+                  <PaymentSuccess />
                 </ProtectedRoute>
               }
             />
@@ -95,6 +114,15 @@ function App() {
               element={
                 <ProtectedRoute requireInstructor={true}>
                   <ManageLectures />
+                </ProtectedRoute>
+              }
+            />
+            {/* Admin Routes */}
+            <Route
+              path="/admin/dashboard"
+              element={
+                <ProtectedRoute requireAdmin={true}>
+                  <AdminDashboard />
                 </ProtectedRoute>
               }
             />

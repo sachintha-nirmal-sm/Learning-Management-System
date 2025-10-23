@@ -1,0 +1,270 @@
+.course-player {
+  min-height: calc(100vh - 80px);
+  background: #f5f6fa;
+  padding: 2rem;
+}
+
+.loading-state,
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 120px);
+  text-align: center;
+  gap: 1.5rem;
+}
+
+.loading-state .spinner {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 4px solid rgba(102, 126, 234, 0.15);
+  border-top-color: #667eea;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.player-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.player-header h1 {
+  margin: 0 0 0.5rem 0;
+  color: #1f1f3d;
+}
+
+.player-header p {
+  margin: 0;
+  color: #5f6388;
+  line-height: 1.6;
+}
+
+.progress-chip {
+  background: #eef1ff;
+  color: #4d52ba;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  font-weight: 600;
+  align-self: flex-start;
+}
+
+.player-content {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+}
+
+.video-pane {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 20px 50px rgba(102, 126, 234, 0.1);
+}
+
+.video-wrapper video {
+  width: 100%;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  background: #000;
+}
+
+.video-placeholder {
+  height: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: #f0f2ff;
+  color: #5f6388;
+  margin-bottom: 1.5rem;
+}
+
+.lecture-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.lecture-details h2 {
+  margin: 0;
+  color: #1f1f3d;
+}
+
+.lecture-duration {
+  display: inline-block;
+  margin-top: 0.5rem;
+  color: #7d81a6;
+  font-size: 0.95rem;
+}
+
+.btn-complete {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: transform 0.2s ease;
+}
+
+.btn-complete:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-complete:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+.lecture-description {
+  background: #f8f9ff;
+  padding: 1rem;
+  border-radius: 12px;
+  color: #5f6388;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.progress-hint {
+  color: #7d81a6;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.resources-section h3 {
+  margin-bottom: 0.75rem;
+  color: #1f1f3d;
+}
+
+.resources-section ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.resources-section a {
+  color: #4d52ba;
+  text-decoration: none;
+}
+
+.resources-section a:hover {
+  text-decoration: underline;
+}
+
+.curriculum-pane {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 50px rgba(102, 126, 234, 0.08);
+}
+
+.curriculum-header {
+  border-bottom: 1px solid #eef1ff;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+}
+
+.curriculum-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  overflow-y: auto;
+  max-height: 520px;
+  padding-right: 0.5rem;
+}
+
+.curriculum-item {
+  display: flex;
+  align-items: stretch;
+  gap: 1rem;
+  border: none;
+  background: #f5f6ff;
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.curriculum-item .lecture-index {
+  font-weight: 700;
+  color: #4d52ba;
+}
+
+.curriculum-item .lecture-info h4 {
+  margin: 0 0 0.4rem 0;
+  color: #1f1f3d;
+}
+
+.curriculum-item .lecture-meta {
+  display: inline-block;
+  margin-right: 0.5rem;
+  color: #7d81a6;
+  font-size: 0.85rem;
+}
+
+.curriculum-item .lecture-meta.success {
+  color: #2ecc71;
+}
+
+.curriculum-item.active {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.12), rgba(118, 75, 162, 0.12));
+  transform: translateX(4px);
+}
+
+.curriculum-item.completed {
+  border: 1px solid rgba(46, 204, 113, 0.3);
+}
+
+.curriculum-item:hover {
+  transform: translateX(4px);
+}
+
+.curriculum-footer {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.curriculum-footer .btn-secondary {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  background: #eef1ff;
+  color: #4d52ba;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.curriculum-footer .btn-secondary:hover {
+  transform: translateY(-1px);
+}
+
+@media (max-width: 1024px) {
+  .player-content {
+    grid-template-columns: 1fr;
+  }
+
+  .curriculum-list {
+    max-height: unset;
+  }
+}

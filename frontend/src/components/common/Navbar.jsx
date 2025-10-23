@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import '../../styles/Navbar.css';
 
 const Navbar = () => {
-  const { user, logout, isAuthenticated, isInstructor } = useAuth();
+  const { user, logout, isAuthenticated, isInstructor, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
@@ -59,6 +59,13 @@ const Navbar = () => {
 
           {isAuthenticated ? (
             <>
+              {isAdmin && (
+                <li className="navbar-item">
+                  <Link to="/admin/dashboard" className="navbar-link">
+                    Admin
+                  </Link>
+                </li>
+              )}
               {isInstructor && (
                 <li className="navbar-item">
                   <Link to="/instructor/dashboard" className="navbar-link">

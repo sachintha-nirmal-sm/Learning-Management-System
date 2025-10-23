@@ -2,8 +2,10 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import '../../styles/EnrolledCourseCard.css';
 
-const EnrolledCourseCard = ({ enrollment, onUpdate }) => {
-  const { course, progress, completedLectures, enrolledAt } = enrollment;
+const EnrolledCourseCard = ({ enrollment }) => {
+  const { course, enrolledAt } = enrollment;
+  const progressPercentage = enrollment.progress?.percentageCompleted || 0;
+  const completedLectures = enrollment.progress?.completedLectures || [];
 
   const formatDate = (date) => {
     return new Date(date).toLocaleDateString('en-US', {
@@ -14,8 +16,8 @@ const EnrolledCourseCard = ({ enrollment, onUpdate }) => {
   };
 
   const getProgressColor = () => {
-    if (progress === 100) return '#27ae60';
-    if (progress >= 50) return '#f39c12';
+    if (progressPercentage === 100) return '#27ae60';
+    if (progressPercentage >= 50) return '#f39c12';
     return '#667eea';
   };
 
@@ -48,11 +50,11 @@ const EnrolledCourseCard = ({ enrollment, onUpdate }) => {
                 stroke={getProgressColor()}
                 strokeWidth="5"
                 strokeDasharray={`${2 * Math.PI * 25}`}
-                strokeDashoffset={`${2 * Math.PI * 25 * (1 - progress / 100)}`}
+                strokeDashoffset={`${2 * Math.PI * 25 * (1 - progressPercentage / 100)}`}
                 transform="rotate(-90 30 30)"
               />
             </svg>
-            <span className="progress-text">{Math.round(progress)}%</span>
+            <span className="progress-text">{Math.round(progressPercentage)}%</span>
           </div>
         </div>
       </div>
@@ -63,7 +65,7 @@ const EnrolledCourseCard = ({ enrollment, onUpdate }) => {
 
         <div className="course-stats">
           <span className="stat">
-            📖 {completedLectures?.length || 0} / {course?.lectures?.length || 0} lectures
+            📖 {completedLectures.length} / {course?.lectures?.length || 0} lectures
           </span>
           <span className="stat">
             📅 Enrolled {formatDate(enrolledAt)}
@@ -71,17 +73,17 @@ const EnrolledCourseCard = ({ enrollment, onUpdate }) => {
         </div>
 
         <div className="progress-bar">
-          <div 
+          <div
             className="progress-fill" 
             style={{ 
-              width: `${progress}%`,
+              width: `${progressPercentage}%`,
               background: getProgressColor()
             }}
           ></div>
         </div>
 
         <div className="card-actions">
-          {progress === 100 ? (
+          {progressPercentage === 100 ? (
             <>
               <Link 
                 to={`/courses/${course?._id}`} 
@@ -96,10 +98,10 @@ const EnrolledCourseCard = ({ enrollment, onUpdate }) => {
           ) : (
             <>
               <Link 
-                to={`/learn/${enrollment._id}`} 
+                to={`/learn/${course?._id}`} 
                 className="btn-primary"
               >
-                {progress === 0 ? 'Start Learning' : 'Continue Learning'}
+                {progressPercentage === 0 ? 'Start Learning' : 'Continue Learning'}
               </Link>
               <Link 
                 to={`/courses/${course?._id}`} 

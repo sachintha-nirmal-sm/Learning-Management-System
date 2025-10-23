@@ -44,8 +44,15 @@ const CourseDetail = () => {
       
       // Check if user is already enrolled
       if (isAuthenticated && user) {
+        const userId = user.id;
         const enrolled = data.course.enrolledStudents?.some(
-          studentId => studentId === user._id
+          (studentId) => {
+            if (!studentId) return false;
+            if (typeof studentId === 'string') {
+              return studentId === userId;
+            }
+            return studentId.toString() === userId;
+          }
         );
         setIsEnrolled(enrolled);
       }
@@ -130,7 +137,10 @@ const CourseDetail = () => {
     );
   }
 
-  const isOwner = user?._id === course.instructor?._id;
+  const currentUserId = user?.id;
+  const isOwner = currentUserId && course.instructor?._id
+    ? course.instructor._id.toString() === currentUserId
+    : false;
   const coursePrice = Number(course.price) || 0;
   const isFreeCourse = coursePrice === 0;
 

@@ -19,13 +19,15 @@ const PaymentSuccess = () => {
       return;
     }
 
+    let redirectTimer;
+
     const confirmPayment = async () => {
       try {
         const data = await paymentService.confirmPayment(sessionId);
         if (data.success) {
           setStatus('success');
           setMessage('Payment confirmed! You now have access to the course.');
-          setTimeout(() => navigate('/my-courses'), 3000);
+          redirectTimer = setTimeout(() => navigate('/my-courses'), 3000);
         } else {
           setStatus('error');
           setMessage('Payment confirmation failed. Please contact support.');
@@ -38,6 +40,12 @@ const PaymentSuccess = () => {
     };
 
     confirmPayment();
+
+    return () => {
+      if (redirectTimer) {
+        clearTimeout(redirectTimer);
+      }
+    };
   }, [location.search, navigate]);
 
   return (

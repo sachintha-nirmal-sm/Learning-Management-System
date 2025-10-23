@@ -18,7 +18,14 @@ const StudentDashboard = () => {
     try {
       setLoading(true);
       const data = await enrollmentService.getMyEnrollments();
-      setEnrollments(data.enrollments || []);
+      const normalized = (data.enrollments || []).map((enrollment) => ({
+        ...enrollment,
+        progress: {
+          percentageCompleted: enrollment.progress?.percentageCompleted || 0,
+          completedLectures: enrollment.progress?.completedLectures || []
+        }
+      }));
+      setEnrollments(normalized);
     } catch (err) {
       setError('Failed to load enrolled courses');
       console.error(err);
@@ -29,9 +36,12 @@ const StudentDashboard = () => {
 
   const getFilteredEnrollments = () => {
     if (filter === 'completed') {
-      return enrollments.filter(e => e.progress === 100);
+      return enrollments.filter(e => (e.progress?.percentageCompleted || 0) === 100);
     } else if (filter === 'in-progress') {
-      return enrollments.filter(e => e.progress > 0 && e.progress < 100);
+      return enrollments.filter(e => {
+        const pct = e.progress?.percentageCompleted || 0;
+        return pct > 0 && pct < 100;
+      });
     }
     return enrollments;
   };
@@ -40,10 +50,13 @@ const StudentDashboard = () => {
 
   const calculateStats = () => {
     const totalCourses = enrollments.length;
-    const completedCourses = enrollments.filter(e => e.progress === 100).length;
-    const inProgressCourses = enrollments.filter(e => e.progress > 0 && e.progress < 100).length;
+    const completedCourses = enrollments.filter(e => (e.progress?.percentageCompleted || 0) === 100).length;
+    const inProgressCourses = enrollments.filter(e => {
+      const pct = e.progress?.percentageCompleted || 0;
+      return pct > 0 && pct < 100;
+    }).length;
     const averageProgress = totalCourses > 0 
-      ? enrollments.reduce((sum, e) => sum + e.progress, 0) / totalCourses 
+      ? enrollments.reduce((sum, e) => sum + (e.progress?.percentageCompleted || 0), 0) / totalCourses 
       : 0;
 
     return { totalCourses, completedCourses, inProgressCourses, averageProgress };
@@ -150,7 +163,6 @@ const StudentDashboard = () => {
                 <EnrolledCourseCard 
                   key={enrollment._id} 
                   enrollment={enrollment}
-                  onUpdate={fetchEnrollments}
                 />
               ))}
             </div>
