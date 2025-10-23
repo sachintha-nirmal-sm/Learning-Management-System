@@ -1,0 +1,364 @@
+const Course = require('../models/course');
+const User = require('../models/User');
+
+// @desc    Create a new course
+// @route   POST /api/courses
+// @access  Private (Instructor/Admin)
+exports.createCourse = async (req, res) => {
+  try {
+    const { title, description, category, level, price, thumbnail, lectures, requirements, whatYouWillLearn, language } = req.body;
+
+    const course = await Course.create({
+      title,
+      description,
+      category,
+      level,
+      price,
+      thumbnail,
+      lectures,
+      requirements,
+      whatYouWillLearn,
+      language,
+      instructor: req.user._id
+    });
+
+    // Add course to instructor's created courses
+    await User.findByIdAndUpdate(req.user._id, {
+      $push: { createdCourses: course._id }
+    });
+
+    res.status(201).json({
+      success: true,
+      course
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get all courses with filtering, sorting, and pagination
+// @route   GET /api/courses
+// @access  Public
+exports.getAllCourses = async (req, res) => {
+  try {
+    const { category, level, search, sort, page = 1, limit = 10 } = req.query;
+
+    // Build query
+    let query = { status: 'published' };
+
+    if (category) {
+      query.category = category;
+    }
+
+    if (level) {
+      query.level = level;
+    }
+
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    // Sorting
+    let sortQuery = {};
+    if (sort === 'price-asc') {
+      sortQuery.price = 1;
+    } else if (sort === 'price-desc') {
+      sortQuery.price = -1;
+    } else if (sort === 'rating') {
+      sortQuery['ratings.average'] = -1;
+    } else {
+      sortQuery.createdAt = -1; // Default: newest first
+    }
+
+    // Pagination
+    const skip = (page - 1) * limit;
+    const total = await Course.countDocuments(query);
+
+    const courses = await Course.find(query)
+      .populate('instructor', 'name email avatar')
+      .sort(sortQuery)
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    res.status(200).json({
+      success: true,
+      count: courses.length,
+      total,
+      totalPages: Math.ceil(total / limit),
+      currentPage: parseInt(page),
+      courses
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get single course by ID
+// @route   GET /api/courses/:id
+// @access  Public
+exports.getCourseById = async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id)
+      .populate('instructor', 'name email avatar')
+      .populate('reviews.user', 'name avatar');
+
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    res.status(200).json({
+      success: true,
+      course
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update course
+// @route   PUT /api/courses/:id
+// @access  Private (Instructor/Admin)
+exports.updateCourse = async (req, res) => {
+  try {
+    let course = await Course.findById(req.params.id);
+
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    // Check if user is the course instructor or admin
+    if (course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized to update this course' });
+    }
+
+    course = await Course.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true
+    });
+
+    res.status(200).json({
+      success: true,
+      course
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Delete course
+// @route   DELETE /api/courses/:id
+// @access  Private (Instructor/Admin)
+exports.deleteCourse = async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id);
+
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    // Check if user is the course instructor or admin
+    if (course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized to delete this course' });
+    }
+
+    await course.deleteOne();
+
+    // Remove course from instructor's created courses
+    await User.findByIdAndUpdate(course.instructor, {
+      $pull: { createdCourses: course._id }
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Course deleted successfully'
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get instructor's courses
+// @route   GET /api/courses/instructor/my-courses
+// @access  Private (Instructor)
+exports.getInstructorCourses = async (req, res) => {
+  try {
+    const courses = await Course.find({ instructor: req.user._id })
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: courses.length,
+      courses
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Add lecture to course
+// @route   POST /api/courses/:id/lectures
+// @access  Private (Instructor/Admin)
+exports.addLecture = async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id);
+
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    // Check authorization
+    if (course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    course.lectures.push(req.body);
+    await course.save();
+
+    res.status(201).json({
+      success: true,
+      course
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update lecture
+// @route   PUT /api/courses/:courseId/lectures/:lectureId
+// @access  Private (Instructor/Admin)
+exports.updateLecture = async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.courseId);
+
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    // Check authorization
+    if (course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    const lecture = course.lectures.id(req.params.lectureId);
+    if (!lecture) {
+      return res.status(404).json({ message: 'Lecture not found' });
+    }
+
+    Object.assign(lecture, req.body);
+    await course.save();
+
+    res.status(200).json({
+      success: true,
+      course
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Delete lecture
+// @route   DELETE /api/courses/:courseId/lectures/:lectureId
+// @access  Private (Instructor/Admin)
+exports.deleteLecture = async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.courseId);
+
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    // Check authorization
+    if (course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    course.lectures.pull(req.params.lectureId);
+    await course.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Lecture deleted successfully',
+      course
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Add review to course
+// @route   POST /api/courses/:id/reviews
+// @access  Private (Student)
+exports.addReview = async (req, res) => {
+  try {
+    const { rating, comment } = req.body;
+    const course = await Course.findById(req.params.id);
+
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    // Check if user is enrolled in the course
+    if (!course.enrolledStudents.includes(req.user._id)) {
+      return res.status(403).json({ message: 'You must be enrolled to review this course' });
+    }
+
+    // Check if user already reviewed
+    const existingReview = course.reviews.find(
+      review => review.user.toString() === req.user._id.toString()
+    );
+
+    if (existingReview) {
+      return res.status(400).json({ message: 'You have already reviewed this course' });
+    }
+
+    course.reviews.push({
+      user: req.user._id,
+      rating,
+      comment
+    });
+
+    // Update ratings
+    course.updateRatings();
+    await course.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Review added successfully',
+      course
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Publish course
+// @route   PUT /api/courses/:id/publish
+// @access  Private (Instructor/Admin)
+exports.publishCourse = async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id);
+
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    // Check authorization
+    if (course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    course.status = 'published';
+    await course.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Course published successfully',
+      course
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
