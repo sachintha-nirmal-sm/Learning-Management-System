@@ -134,7 +134,10 @@ const StudentDashboard = () => {
                     ? "You haven't enrolled in any courses yet." 
                     : `You don't have any ${filter.replace('-', ' ')} courses.`}
                 </p>
-                <Link to="/courses" className="btn-primary" style={{ width: '100%' }}>
+                <Link
+                  to="/courses"
+                  className="btn-primary empty-state-btn"
+                >
                   Explore Courses
                 </Link>
               </div>
