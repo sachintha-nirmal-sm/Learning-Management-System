@@ -77,6 +77,11 @@ const courseService = {
     const response = await api.get('/courses/admin/pending');
     return response.data;
   },
+
+  getCourseContent: async (courseId) => {
+    const response = await api.get(`/courses/${courseId}/content`);
+    return response.data;
+  },
 };
 
 export default courseService;

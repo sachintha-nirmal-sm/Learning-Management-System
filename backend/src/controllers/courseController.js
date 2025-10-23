@@ -1,4 +1,5 @@
 const Course = require('../models/course');
+const Enrollment = require('../models/enrollment');
 const User = require('../models/User');
 const cloudinary = require('../config/cloudinary');
 
@@ -249,6 +250,52 @@ exports.getPendingCourses = async (req, res) => {
       success: true,
       count: courses.length,
       courses
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get full course content for enrolled students/instructors
+// @route   GET /api/courses/:id/content
+// @access  Private
+exports.getCourseContent = async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id)
+      .populate('instructor', 'name email role');
+
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    const isInstructor = course.instructor && course.instructor._id.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === 'admin';
+
+    const enrollment = await Enrollment.findOne({
+      course: course._id,
+      student: req.user._id
+    });
+
+    if (!isInstructor && !isAdmin && !enrollment) {
+      return res.status(403).json({ message: 'You must be enrolled to access this course content' });
+    }
+
+    if (Array.isArray(course.lectures) && course.lectures.length > 0) {
+      course.lectures.sort((a, b) => (a.order || 0) - (b.order || 0));
+    }
+
+    const enrollmentPayload = enrollment ? {
+      id: enrollment._id,
+      status: enrollment.status,
+      progress: enrollment.progress?.percentageCompleted || 0,
+      percentageCompleted: enrollment.progress?.percentageCompleted || 0,
+      completedLectures: enrollment.progress?.completedLectures?.map((lectureId) => lectureId.toString()) || []
+    } : null;
+
+    res.status(200).json({
+      success: true,
+      course,
+      enrollment: enrollmentPayload
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

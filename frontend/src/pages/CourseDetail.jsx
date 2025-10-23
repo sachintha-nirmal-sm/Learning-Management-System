@@ -1,9 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { loadStripe } from '@stripe/stripe-js';
 import { useAuth } from '../context/AuthContext';
 import courseService from '../services/courseService';
 import enrollmentService from '../services/enrollmentService';
+import paymentService from '../services/paymentService';
 import '../styles/CourseDetail.css';
+
+let stripePromise;
+const getStripe = async () => {
+  if (!stripePromise) {
+    const publishableKey = process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY;
+    if (!publishableKey) {
+      throw new Error('Stripe publishable key is not configured');
+    }
+    stripePromise = loadStripe(publishableKey);
+  }
+  return stripePromise;
+};
 
 const CourseDetail = () => {
   const { id } = useParams();
@@ -14,6 +28,7 @@ const CourseDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [enrolling, setEnrolling] = useState(false);
+  const [checkingOut, setCheckingOut] = useState(false);
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [activeTab, setActiveTab] = useState('overview'); // overview, curriculum, instructor, reviews
 
@@ -42,7 +57,7 @@ const CourseDetail = () => {
     }
   };
 
-  const handleEnroll = async () => {
+  const handleFreeEnroll = async () => {
     if (!isAuthenticated) {
       navigate('/login');
       return;
@@ -58,6 +73,41 @@ const CourseDetail = () => {
       alert(err.response?.data?.message || 'Failed to enroll in course');
     } finally {
       setEnrolling(false);
+    }
+  };
+
+  const handlePurchase = async () => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+
+    try {
+      setCheckingOut(true);
+      const data = await paymentService.createCheckoutSession({
+        courseId: id,
+        successPath: '/payment-success',
+        cancelPath: `/courses/${id}`
+      });
+
+      if (data.url) {
+        window.location.href = data.url;
+        return;
+      }
+
+      if (data.sessionId) {
+        const stripe = await getStripe();
+        await stripe.redirectToCheckout({ sessionId: data.sessionId });
+        return;
+      }
+
+      throw new Error('Unable to initiate checkout session');
+    } catch (err) {
+      const message = err.response?.data?.message || err.message || 'Failed to start payment';
+      alert(message);
+      console.error(err);
+    } finally {
+      setCheckingOut(false);
     }
   };
 
@@ -81,6 +131,8 @@ const CourseDetail = () => {
   }
 
   const isOwner = user?._id === course.instructor?._id;
+  const coursePrice = Number(course.price) || 0;
+  const isFreeCourse = coursePrice === 0;
 
   return (
     <div className="course-detail">
@@ -130,10 +182,10 @@ const CourseDetail = () => {
           </div>
 
           <div className="course-price-section">
-            {course.price === 0 ? (
+            {isFreeCourse ? (
               <h2 className="price free">Free</h2>
             ) : (
-              <h2 className="price">${course.price}</h2>
+              <h2 className="price">${coursePrice.toFixed(2)}</h2>
             )}
 
             {isOwner ? (
@@ -146,16 +198,29 @@ const CourseDetail = () => {
                 </Link>
               </div>
             ) : isEnrolled ? (
-              <Link to="/my-courses" className="btn-enrolled">
-                ✓ Enrolled - Go to My Learning
-              </Link>
-            ) : (
-              <button 
-                className="btn-enroll" 
-                onClick={handleEnroll}
+              <div className="owner-actions">
+                <Link to={`/learn/${course._id}`} className="btn-enroll">
+                  Continue Learning
+                </Link>
+                <Link to="/my-courses" className="btn-secondary">
+                  Go to My Courses
+                </Link>
+              </div>
+            ) : isFreeCourse ? (
+              <button
+                className="btn-enroll"
+                onClick={handleFreeEnroll}
                 disabled={enrolling}
               >
-                {enrolling ? 'Enrolling...' : 'Enroll Now'}
+                {enrolling ? 'Enrolling...' : 'Enroll for Free'}
+              </button>
+            ) : (
+              <button
+                className="btn-enroll"
+                onClick={handlePurchase}
+                disabled={checkingOut}
+              >
+                {checkingOut ? 'Redirecting...' : 'Buy Course'}
               </button>
             )}
 

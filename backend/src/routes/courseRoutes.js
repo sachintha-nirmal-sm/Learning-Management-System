@@ -8,6 +8,7 @@ const {
   deleteCourse,
   getInstructorCourses,
   getPendingCourses,
+  getCourseContent,
   addLecture,
   updateLecture,
   deleteLecture,
@@ -23,6 +24,7 @@ const { protect, authorize } = require('../middleware/auth');
 router.get('/', getAllCourses);
 router.get('/instructor/my-courses', protect, authorize('instructor', 'admin'), getInstructorCourses);
 router.get('/admin/pending', protect, authorize('admin'), getPendingCourses);
+router.get('/:id/content', protect, getCourseContent);
 router.get('/:id', getCourseById);
 
 // Protected routes - Instructor/Admin only
