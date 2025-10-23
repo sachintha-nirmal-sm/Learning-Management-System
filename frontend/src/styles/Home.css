@@ -9,6 +9,9 @@
   padding: 6rem 2rem;
   text-align: center;
 }
+.hero-content{
+  margin: auto;
+}
 
 .hero-content h1 {
   font-size: 3rem;
