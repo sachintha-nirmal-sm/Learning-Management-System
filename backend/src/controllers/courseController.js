@@ -2,6 +2,20 @@ const Course = require('../models/course');
 const User = require('../models/User');
 const cloudinary = require('../config/cloudinary');
 
+const normalizeResources = (input) => {
+  if (!Array.isArray(input)) {
+    return [];
+  }
+
+  return input
+    .map((item) => ({
+      title: item?.title ? String(item.title).trim() : 'Resource',
+      url: item?.url,
+      publicId: item?.publicId || item?.public_id
+    }))
+    .filter((item) => Boolean(item.url));
+};
+
 // @desc    Create a new course
 // @route   POST /api/courses
 // @access  Private (Instructor/Admin)
@@ -14,27 +28,35 @@ exports.createCourse = async (req, res) => {
       level,
       price,
       thumbnail,
-      lectures,
       requirements,
       whatYouWillLearn,
       language
     } = req.body;
+
+    const normalizeList = (input) => {
+      if (Array.isArray(input)) {
+        return input.map((item) => String(item).trim()).filter(Boolean);
+      }
+      return [];
+    };
 
     const course = await Course.create({
       title,
       description,
       category,
       level,
-      price,
-  thumbnail,
-      lectures,
-      requirements,
-      whatYouWillLearn,
-      language,
+      price: typeof price === 'number' ? price : Number(price) || 0,
+      thumbnail: thumbnail && typeof thumbnail === 'object' ? {
+        public_id: thumbnail.public_id,
+        url: thumbnail.url
+      } : undefined,
+      requirements: normalizeList(requirements),
+      whatYouWillLearn: normalizeList(whatYouWillLearn),
+      language: language || 'English',
       instructor: req.user._id
     });
 
-  // Add course to instructor's created courses
+    // Add course to instructor's created courses
     await User.findByIdAndUpdate(req.user._id, {
       $push: { createdCourses: course._id }
     });
@@ -235,8 +257,8 @@ exports.addLecture = async (req, res) => {
       description: req.body.description,
       videoUrl: req.body.videoUrl,
       videoPublicId: req.body.videoPublicId,
-      duration: req.body.duration,
-      resources: Array.isArray(req.body.resources) ? req.body.resources : [],
+      duration: req.body.duration ? Number(req.body.duration) : undefined,
+      resources: normalizeResources(req.body.resources),
       isPreview: Boolean(req.body.isPreview),
       order: course.lectures.length + 1
     };
@@ -289,10 +311,10 @@ exports.updateLecture = async (req, res) => {
       lecture.videoPublicId = req.body.videoPublicId;
     }
     if (req.body.duration !== undefined) {
-      lecture.duration = req.body.duration;
+      lecture.duration = req.body.duration ? Number(req.body.duration) : undefined;
     }
     if (req.body.resources !== undefined) {
-      lecture.resources = Array.isArray(req.body.resources) ? req.body.resources : [];
+      lecture.resources = normalizeResources(req.body.resources);
     }
     if (req.body.isPreview !== undefined) {
       lecture.isPreview = Boolean(req.body.isPreview);
@@ -339,6 +361,17 @@ exports.deleteLecture = async (req, res) => {
         await cloudinary.uploader.destroy(lecture.videoPublicId, { resource_type: 'video' });
       } catch (cleanupError) {
         console.error('Failed to delete lecture video:', cleanupError.message);
+      }
+    }
+
+    if (Array.isArray(lecture?.resources) && lecture.resources.length) {
+      for (const resource of lecture.resources) {
+        if (!resource?.publicId) continue;
+        try {
+          await cloudinary.uploader.destroy(resource.publicId, { resource_type: 'raw' });
+        } catch (cleanupError) {
+          console.error('Failed to delete lecture resource:', cleanupError.message);
+        }
       }
     }
 

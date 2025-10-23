@@ -82,7 +82,9 @@
 
 .btn-primary,
 .btn-secondary,
-.btn-danger {
+.btn-danger,
+.btn-light,
+.btn-text {
   border: none;
   border-radius: 999px;
   padding: 0.75rem 1.5rem;
@@ -122,6 +124,30 @@
 
 .btn-danger:hover {
   background: #ef4444;
+}
+
+.btn-light {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.btn-light:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn-light:not(:disabled):hover {
+  background: #c7d2fe;
+}
+
+.btn-text {
+  background: transparent;
+  color: #ef4444;
+  padding: 0.35rem 0.75rem;
+}
+
+.btn-text:hover {
+  background: rgba(248, 113, 113, 0.12);
 }
 
 .inline-error {
@@ -179,6 +205,12 @@
   color: #0f172a;
 }
 
+.lecture-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 .lecture-info p {
   margin: 0;
   color: #475569;
@@ -204,6 +236,112 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+}
+
+.lecture-resources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.resource-chip {
+  background: #e0f2fe;
+  color: #0369a1;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.form-subsection {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.subsection-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.subsection-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: #0f172a;
+}
+
+.upload-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: rgba(37, 99, 235, 0.08);
+  border-radius: 10px;
+  padding: 0.5rem 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 6px;
+  background: #2563eb;
+  border-radius: 999px;
+  transition: width 0.2s ease;
+}
+
+.video-preview {
+  background: #e0f2fe;
+  padding: 0.75rem;
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.resource-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.resource-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #e2e8f0;
+  border-radius: 10px;
+  padding: 0.5rem 0.75rem;
+}
+
+.resource-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.resource-actions a {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.resource-actions button {
+  border: none;
+  background: transparent;
+  color: #ef4444;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.resource-actions button:hover {
+  text-decoration: underline;
 }
 
 .lecture-modal {

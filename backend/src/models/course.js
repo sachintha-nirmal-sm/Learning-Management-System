@@ -46,7 +46,7 @@ const courseSchema = new mongoose.Schema({
   },
   level: {
     type: String,
-    enum: ['Beginner', 'Intermediate', 'Advanced'],
+    enum: ['Beginner', 'Intermediate', 'Advanced', 'All Levels'],
     default: 'Beginner'
   },
   price: {
@@ -57,6 +57,18 @@ const courseSchema = new mongoose.Schema({
   thumbnail: {
     public_id: String,
     url: String
+  },
+  requirements: {
+    type: [String],
+    default: []
+  },
+  whatYouWillLearn: {
+    type: [String],
+    default: []
+  },
+  language: {
+    type: String,
+    default: 'English'
   },
   lectures: [lectureSchema],
   enrolledStudents: [{
@@ -82,4 +94,4 @@ const courseSchema = new mongoose.Schema({
   timestamps: true
 });
 
-module.exports = mongoose.model('course', courseSchema);
+module.exports = mongoose.model('Course', courseSchema);
