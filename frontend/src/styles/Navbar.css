@@ -82,6 +82,13 @@
   justify-content: center;
   font-weight: bold;
   font-size: 1.2rem;
+  border: none;
+  cursor: pointer;
+}
+
+.user-avatar:focus-visible {
+  outline: 3px solid rgba(102, 126, 234, 0.45);
+  outline-offset: 2px;
 }
 
 .dropdown-menu {

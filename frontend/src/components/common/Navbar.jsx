@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import '../../styles/Navbar.css';
@@ -7,11 +7,36 @@ const Navbar = () => {
   const { user, logout, isAuthenticated, isInstructor } = useAuth();
   const navigate = useNavigate();
   const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    if (!showDropdown) {
+      return;
+    }
+
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showDropdown]);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
+
+  const toggleDropdown = () => {
+    setShowDropdown((prev) => !prev);
+  };
+
+  const isStudentOnly = user?.role === 'student';
 
   return (
     <nav className="navbar">
@@ -41,19 +66,17 @@ const Navbar = () => {
                   </Link>
                 </li>
               )}
-              <li className="navbar-item">
-                <Link to="/my-courses" className="navbar-link">
-                  My Learning
-                </Link>
-              </li>
-              <li 
-                className="navbar-item navbar-user"
-                onMouseEnter={() => setShowDropdown(true)}
-                onMouseLeave={() => setShowDropdown(false)}
-              >
-                <div className="user-avatar">
+              {isStudentOnly && (
+                <li className="navbar-item">
+                  <Link to="/my-courses" className="navbar-link">
+                    My Learning
+                  </Link>
+                </li>
+              )}
+              <li className="navbar-item navbar-user" ref={dropdownRef}>
+                <button type="button" className="user-avatar" onClick={toggleDropdown} aria-haspopup="true" aria-expanded={showDropdown}>
                   {user?.name?.charAt(0).toUpperCase() || 'U'}
-                </div>
+                </button>
                 {showDropdown && (
                   <div className="dropdown-menu">
                     <div className="dropdown-header">
@@ -61,10 +84,10 @@ const Navbar = () => {
                       <p className="user-email">{user?.email}</p>
                     </div>
                     <div className="dropdown-divider"></div>
-                    <Link to="/profile" className="dropdown-item">
+                    <Link to="/profile" className="dropdown-item" onClick={() => setShowDropdown(false)}>
                       Profile
                     </Link>
-                    <Link to="/settings" className="dropdown-item">
+                    <Link to="/settings" className="dropdown-item" onClick={() => setShowDropdown(false)}>
                       Settings
                     </Link>
                     <div className="dropdown-divider"></div>
