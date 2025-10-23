@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import courseService from '../services/courseService';
 import CourseCard from '../components/course/CourseCard';
+import { useAuth } from '../context/AuthContext';
 import '../styles/Home.css';
 
 const Home = () => {
+  const { isInstructor, isAuthenticated } = useAuth();
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -25,18 +27,20 @@ const Home = () => {
         params.category = selectedCategory;
       }
       const data = await courseService.getAllCourses(params);
-      setCourses(data.courses || []);
+      setCourses(Array.isArray(data.courses) ? data.courses : []);
+      setError('');
     } catch (err) {
       setError('Failed to load courses');
       console.error(err);
+      setCourses([]);
     } finally {
       setLoading(false);
     }
   };
 
   const filteredCourses = courses.filter(course =>
-    course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    course.description.toLowerCase().includes(searchTerm.toLowerCase())
+    (course.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (course.description || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -84,12 +88,20 @@ const Home = () => {
           {loading && <div className="loading">Loading courses...</div>}
           {error && <div className="error-message">{error}</div>}
           
-          {!loading && filteredCourses.length === 0 && (
+          {!loading && !error && filteredCourses.length === 0 && (
             <div className="no-courses">
-              <p>No courses found. Be the first to create one!</p>
-              <Link to="/instructor/create-course" className="btn-primary">
-                Create Course
-              </Link>
+              <p>No courses found.</p>
+              {isInstructor ? (
+                <Link to="/instructor/create-course" className="btn-primary">
+                  Create Course
+                </Link>
+              ) : (
+                <span className="no-courses-hint">
+                  {isAuthenticated
+                    ? 'Try adjusting your search or category filters.'
+                    : 'Sign in to see personalized recommendations.'}
+                </span>
+              )}
             </div>
           )}
 

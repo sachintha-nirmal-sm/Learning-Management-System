@@ -39,6 +39,7 @@ import InstructorDashboard from './pages/InstructorDashboard';
 import CreateCourse from './pages/CreateCourse';
 import CourseDetail from './pages/CourseDetail';
 import ManageLectures from './pages/ManageLectures';
+import Profile from './pages/Profile';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import './styles/App.css';
 
@@ -53,6 +54,14 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/courses/:id" element={<CourseDetail />} />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
             
             {/* Student Routes */}
             <Route 

@@ -158,6 +158,14 @@
   margin-bottom: 1rem;
 }
 
+.empty-state .btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 1.5rem auto 0;
+  min-width: 180px;
+}
+
 .empty-state h3 {
   color: #333;
   margin-bottom: 0.5rem;

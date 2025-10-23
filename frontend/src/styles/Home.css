@@ -134,6 +134,13 @@
   font-weight: 600;
 }
 
+.no-courses-hint {
+  display: block;
+  margin-top: 0.75rem;
+  color: #555;
+  font-size: 0.95rem;
+}
+
 /* Features Section */
 .features-section {
   padding: 4rem 2rem;
