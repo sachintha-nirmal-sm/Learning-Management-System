@@ -45,6 +45,7 @@ export const AuthProvider = ({ children }) => {
     logout,
     isAuthenticated: !!user,
     isInstructor: user?.role === 'instructor' || user?.role === 'admin',
+    isStudent: user?.role === 'student' || user?.role === 'admin',
     isAdmin: user?.role === 'admin',
     loading,
   };

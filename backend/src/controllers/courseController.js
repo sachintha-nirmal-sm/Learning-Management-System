@@ -1,14 +1,13 @@
 const Course = require('../models/course');
 const User = require('../models/User');
+const cloudinary = require('../config/cloudinary');
 
 // @desc    Create a new course
 // @route   POST /api/courses
 // @access  Private (Instructor/Admin)
 exports.createCourse = async (req, res) => {
   try {
-    const { title, description, category, level, price, thumbnail, lectures, requirements, whatYouWillLearn, language } = req.body;
-
-    const course = await Course.create({
+    const {
       title,
       description,
       category,
@@ -18,11 +17,24 @@ exports.createCourse = async (req, res) => {
       lectures,
       requirements,
       whatYouWillLearn,
+      language
+    } = req.body;
+
+    const course = await Course.create({
+      title,
+      description,
+      category,
+      level,
+      price,
+  thumbnail,
+      lectures,
+      requirements,
+      whatYouWillLearn,
       language,
       instructor: req.user._id
     });
 
-    // Add course to instructor's created courses
+  // Add course to instructor's created courses
     await User.findByIdAndUpdate(req.user._id, {
       $push: { createdCourses: course._id }
     });
@@ -107,6 +119,10 @@ exports.getCourseById = async (req, res) => {
 
     if (!course) {
       return res.status(404).json({ message: 'Course not found' });
+    }
+
+    if (course.lectures?.length) {
+      course.lectures.sort((a, b) => (a.order || 0) - (b.order || 0));
     }
 
     res.status(200).json({
@@ -214,7 +230,18 @@ exports.addLecture = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
-    course.lectures.push(req.body);
+    const lecturePayload = {
+      title: req.body.title,
+      description: req.body.description,
+      videoUrl: req.body.videoUrl,
+      videoPublicId: req.body.videoPublicId,
+      duration: req.body.duration,
+      resources: Array.isArray(req.body.resources) ? req.body.resources : [],
+      isPreview: Boolean(req.body.isPreview),
+      order: course.lectures.length + 1
+    };
+
+    course.lectures.push(lecturePayload);
     await course.save();
 
     res.status(201).json({
@@ -247,8 +274,39 @@ exports.updateLecture = async (req, res) => {
       return res.status(404).json({ message: 'Lecture not found' });
     }
 
-    Object.assign(lecture, req.body);
+    const previousVideoPublicId = lecture.videoPublicId;
+
+    if (req.body.title !== undefined) {
+      lecture.title = req.body.title;
+    }
+    if (req.body.description !== undefined) {
+      lecture.description = req.body.description;
+    }
+    if (req.body.videoUrl !== undefined) {
+      lecture.videoUrl = req.body.videoUrl;
+    }
+    if (req.body.videoPublicId !== undefined) {
+      lecture.videoPublicId = req.body.videoPublicId;
+    }
+    if (req.body.duration !== undefined) {
+      lecture.duration = req.body.duration;
+    }
+    if (req.body.resources !== undefined) {
+      lecture.resources = Array.isArray(req.body.resources) ? req.body.resources : [];
+    }
+    if (req.body.isPreview !== undefined) {
+      lecture.isPreview = Boolean(req.body.isPreview);
+    }
+
     await course.save();
+
+    if (previousVideoPublicId && previousVideoPublicId !== lecture.videoPublicId) {
+      try {
+        await cloudinary.uploader.destroy(previousVideoPublicId, { resource_type: 'video' });
+      } catch (cleanupError) {
+        console.error('Failed to delete old lecture video:', cleanupError.message);
+      }
+    }
 
     res.status(200).json({
       success: true,
@@ -275,12 +333,78 @@ exports.deleteLecture = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
+    const lecture = course.lectures.id(req.params.lectureId);
+    if (lecture?.videoPublicId) {
+      try {
+        await cloudinary.uploader.destroy(lecture.videoPublicId, { resource_type: 'video' });
+      } catch (cleanupError) {
+        console.error('Failed to delete lecture video:', cleanupError.message);
+      }
+    }
+
     course.lectures.pull(req.params.lectureId);
+
+    course.lectures.forEach((item, index) => {
+      item.order = index + 1;
+    });
+
     await course.save();
 
     res.status(200).json({
       success: true,
       message: 'Lecture deleted successfully',
+      course
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Reorder lectures
+// @route   PUT /api/courses/:courseId/lectures/reorder
+// @access  Private (Instructor/Admin)
+exports.reorderLectures = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const { order } = req.body;
+
+    if (!Array.isArray(order) || order.length === 0) {
+      return res.status(400).json({ message: 'Invalid lecture order payload' });
+    }
+
+    const course = await Course.findById(courseId);
+
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    if (course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    const lectureIdSet = new Set(order.map(String));
+    const existingLectures = course.lectures;
+
+    if (existingLectures.length !== lectureIdSet.size) {
+      return res.status(400).json({ message: 'Lecture order does not match existing lectures' });
+    }
+
+    const allIdsValid = existingLectures.every((lecture) => lectureIdSet.has(String(lecture._id)));
+    if (!allIdsValid) {
+      return res.status(400).json({ message: 'Lecture order contains invalid entries' });
+    }
+
+    order.forEach((lectureId, index) => {
+      const lecture = existingLectures.id(lectureId);
+      if (lecture) {
+        lecture.order = index + 1;
+      }
+    });
+
+    await course.save();
+
+    res.status(200).json({
+      success: true,
       course
     });
   } catch (error) {

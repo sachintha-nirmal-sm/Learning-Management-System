@@ -88,13 +88,13 @@ app.get('/', (req, res) => {
 const authRoutes = require('./routes/authRoutes');
 const courseRoutes = require('./routes/courseRoutes');
 const enrollmentRoutes = require('./routes/enrollmentRoutes');
-// const uploadRoutes = require('./routes/uploadRoutes'); // Commented out temporarily
+const uploadRoutes = require('./routes/uploadRoutes');
 
 // Use routes
 app.use('/api/auth', authRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/enrollments', enrollmentRoutes);
-// app.use('/api/upload', uploadRoutes); // Commented out temporarily
+app.use('/api/upload', uploadRoutes);
 
 // 404 handler
 app.use((req, res, next) => {

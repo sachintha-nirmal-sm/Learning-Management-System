@@ -7,14 +7,20 @@ const lectureSchema = new mongoose.Schema({
   },
   description: String,
   videoUrl: String,
+  videoPublicId: String,
   duration: Number, // in minutes
   resources: [{
     title: String,
-    url: String
+    url: String,
+    publicId: String
   }],
   isPreview: {
     type: Boolean,
     default: false
+  },
+  order: {
+    type: Number,
+    default: 0
   }
 });
 

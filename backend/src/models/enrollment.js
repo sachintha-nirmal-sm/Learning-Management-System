@@ -62,7 +62,7 @@ enrollmentSchema.index({ student: 1, course: 1 }, { unique: true });
 
 // Method to update progress
 enrollmentSchema.methods.updateProgress = async function() {
-  const Course = mongoose.model('Course');
+  const Course = mongoose.model('course');
   const course = await Course.findById(this.course);
   
   if (course && course.lectures.length > 0) {

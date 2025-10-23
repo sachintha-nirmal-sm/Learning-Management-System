@@ -53,6 +53,11 @@ const courseService = {
     return response.data;
   },
 
+  reorderLectures: async (courseId, order) => {
+    const response = await api.put(`/courses/${courseId}/lectures/reorder`, { order });
+    return response.data;
+  },
+
   publishCourse: async (courseId) => {
     const response = await api.put(`/courses/${courseId}/publish`);
     return response.data;
