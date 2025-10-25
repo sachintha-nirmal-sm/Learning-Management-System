@@ -7,6 +7,7 @@ const InstructorCourseCard = ({ course, onDelete, onUpdate }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const price = Number(course.price) || 0;
+  const isPublished = course.status === 'published';
 
   const statusBadge = () => {
     switch (course.status) {
@@ -76,13 +77,19 @@ const InstructorCourseCard = ({ course, onDelete, onUpdate }) => {
             </button>
             {showMenu && (
               <div className="dropdown-menu">
-                <Link
-                  to={`/instructor/courses/${course._id}/lectures`}
-                  className="menu-item"
-                  onClick={() => setShowMenu(false)}
-                >
-                  📖 Manage Lectures
-                </Link>
+                {isPublished ? (
+                  <Link
+                    to={`/instructor/courses/${course._id}/lectures`}
+                    className="menu-item"
+                    onClick={() => setShowMenu(false)}
+                  >
+                    📖 Manage Lectures
+                  </Link>
+                ) : (
+                  <button className="menu-item" disabled title="Available after admin publishes this course">
+                    📖 Manage Lectures
+                  </button>
+                )}
                 {course.status === 'published' && (
                   <button
                     onClick={handleMoveToDraft}

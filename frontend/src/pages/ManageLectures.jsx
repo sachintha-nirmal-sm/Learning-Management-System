@@ -34,6 +34,8 @@ const ManageLectures = () => {
     const videoInputRef = useRef(null);
     const resourceInputRef = useRef(null);
 
+    const isPublished = course?.status === 'published';
+
     useEffect(() => {
         window.scrollTo(0, 0);
         loadCourse();
@@ -74,6 +76,10 @@ const ManageLectures = () => {
     };
 
     const openCreateForm = () => {
+        if (!isPublished) {
+            setError('Lectures can be managed only after an admin publishes this course.');
+            return;
+        }
         setFormData(createDefaultFormState());
         setEditingLectureId(null);
         setError('');
@@ -81,6 +87,10 @@ const ManageLectures = () => {
     };
 
     const openEditForm = (lecture) => {
+        if (!isPublished) {
+            setError('Lectures can be managed only after an admin publishes this course.');
+            return;
+        }
         setFormData({
             title: lecture.title || '',
             description: lecture.description || '',
@@ -100,6 +110,11 @@ const ManageLectures = () => {
 
         if (!formData.title.trim()) {
             setError('Lecture title is required');
+            return;
+        }
+
+        if (!isPublished) {
+            setError('Lectures can be managed only after an admin publishes this course.');
             return;
         }
 
@@ -135,6 +150,10 @@ const ManageLectures = () => {
     };
 
     const handleDeleteLecture = async (lectureId) => {
+        if (!isPublished) {
+            setError('Lectures can be managed only after an admin publishes this course.');
+            return;
+        }
         if (!window.confirm('Are you sure you want to delete this lecture?')) {
             return;
         }
@@ -151,6 +170,10 @@ const ManageLectures = () => {
     };
 
     const handleReorder = async (lectureId, direction) => {
+        if (!isPublished) {
+            setError('Lectures can be managed only after an admin publishes this course.');
+            return;
+        }
         const currentIndex = lectures.findIndex((lecture) => lecture._id === lectureId);
         if (currentIndex === -1) return;
 
@@ -307,8 +330,8 @@ const ManageLectures = () => {
                     <div>
                         <Link to="/instructor/dashboard" className="back-link">← Back to dashboard</Link>
                         <h1>{course.title}</h1>
-                        <div className={`status-pill ${course.status === 'published' ? 'published' : 'draft'}`}>
-                            {course.status === 'published' ? 'Published' : 'Draft'}
+                        <div className={`status-pill status-${course.status || 'draft'}`}>
+                            {course.status ? course.status.charAt(0).toUpperCase() + course.status.slice(1) : 'Draft'}
                         </div>
                         <p className="subtitle">Add, edit, and organize your course content</p>
                     </div>
@@ -316,11 +339,17 @@ const ManageLectures = () => {
                         <button className="btn-secondary" onClick={() => navigate(`/courses/${course._id}`)}>
                             Preview course
                         </button>
-                        <button className="btn-primary" onClick={openCreateForm}>
+                        <button className="btn-primary" onClick={openCreateForm} disabled={!isPublished}>
                             ➕ Add lecture
                         </button>
                     </div>
                 </div>
+
+                {!isPublished && (
+                    <div className="info-banner">
+                        <strong>Pending approval.</strong> An admin must publish this course before you can create or edit lectures.
+                    </div>
+                )}
 
                 {error && <div className="inline-error">{error}</div>}
 
@@ -329,7 +358,7 @@ const ManageLectures = () => {
                         <div className="empty-icon" aria-hidden="true">🎬</div>
                         <h3>No lectures yet</h3>
                         <p>Create your first lecture to start building this course.</p>
-                        <button className="btn-primary" onClick={openCreateForm}>
+                        <button className="btn-primary" onClick={openCreateForm} disabled={!isPublished}>
                             Add first lecture
                         </button>
                     </div>
@@ -363,16 +392,16 @@ const ManageLectures = () => {
                                     )}
                                 </div>
                                 <div className="lecture-actions">
-                                    <button className="btn-light" onClick={() => handleReorder(lecture._id, 'up')} disabled={index === 0}>
+                                    <button className="btn-light" onClick={() => handleReorder(lecture._id, 'up')} disabled={!isPublished || index === 0}>
                                         ↑ Move up
                                     </button>
-                                    <button className="btn-light" onClick={() => handleReorder(lecture._id, 'down')} disabled={index === lectures.length - 1}>
+                                    <button className="btn-light" onClick={() => handleReorder(lecture._id, 'down')} disabled={!isPublished || index === lectures.length - 1}>
                                         ↓ Move down
                                     </button>
-                                    <button className="btn-light" onClick={() => openEditForm(lecture)}>
+                                    <button className="btn-light" onClick={() => openEditForm(lecture)} disabled={!isPublished}>
                                         ✏ Edit
                                     </button>
-                                    <button className="btn-danger" onClick={() => handleDeleteLecture(lecture._id)}>
+                                    <button className="btn-danger" onClick={() => handleDeleteLecture(lecture._id)} disabled={!isPublished}>
                                         🗑 Delete
                                     </button>
                                 </div>
@@ -526,7 +555,7 @@ const ManageLectures = () => {
                                 <button className="btn-secondary" type="button" onClick={resetForm}>
                                     Cancel
                                 </button>
-                                <button className="btn-primary" type="submit" disabled={saving || videoUploading || resourceUploading}>
+                                <button className="btn-primary" type="submit" disabled={!isPublished || saving || videoUploading || resourceUploading}>
                                     {saving ? 'Saving…' : editingLectureId ? 'Update lecture' : 'Save lecture'}
                                 </button>
                             </div>

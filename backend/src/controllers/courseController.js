@@ -173,6 +173,10 @@ exports.updateCourse = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to update this course' });
     }
 
+    if (req.body.status && req.user.role !== 'admin' && req.body.status !== 'draft') {
+      return res.status(403).json({ message: 'Only admins can set the course to that status' });
+    }
+
     course = await Course.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true
@@ -321,8 +325,8 @@ exports.submitCourseForReview = async (req, res) => {
       return res.status(400).json({ message: 'Course is already published' });
     }
 
-    if (!course.lectures?.length) {
-      return res.status(400).json({ message: 'Add at least one lecture before submitting for review' });
+    if (course.status === 'pending') {
+      return res.status(400).json({ message: 'Course is already pending review' });
     }
 
     course.status = 'pending';
@@ -355,6 +359,10 @@ exports.addLecture = async (req, res) => {
     // Check authorization
     if (course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    if (course.status !== 'published' && req.user.role !== 'admin') {
+      return res.status(400).json({ message: 'Course must be approved and published before adding lectures' });
     }
 
     const lecturePayload = {
@@ -394,6 +402,10 @@ exports.updateLecture = async (req, res) => {
     // Check authorization
     if (course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    if (course.status !== 'published' && req.user.role !== 'admin') {
+      return res.status(400).json({ message: 'Course must be approved and published before editing lectures' });
     }
 
     const lecture = course.lectures.id(req.params.lectureId);
@@ -460,6 +472,10 @@ exports.deleteLecture = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
+    if (course.status !== 'published' && req.user.role !== 'admin') {
+      return res.status(400).json({ message: 'Course must be approved and published before deleting lectures' });
+    }
+
     const lecture = course.lectures.id(req.params.lectureId);
     if (lecture?.videoPublicId) {
       try {
@@ -518,6 +534,10 @@ exports.reorderLectures = async (req, res) => {
 
     if (course.instructor.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    if (course.status !== 'published' && req.user.role !== 'admin') {
+      return res.status(400).json({ message: 'Course must be approved and published before reordering lectures' });
     }
 
     const lectureIdSet = new Set(order.map(String));
