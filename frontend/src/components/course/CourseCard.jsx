@@ -18,9 +18,13 @@ const CourseCard = ({ course }) => {
       
       <div className="course-content">
         <h3 className="course-title">{course.title}</h3>
-        <p className="course-description">
-          {course.description.substring(0, 100)}...
-        </p>
+        {course.description && (
+          <p className="course-description">
+            {course.description.length > 100
+              ? `${course.description.substring(0, 100)}...`
+              : course.description}
+          </p>
+        )}
         
         <div className="course-instructor">
           By {course.instructor?.name || 'Instructor'}

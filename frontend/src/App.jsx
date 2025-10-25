@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Navbar from './components/common/Navbar';
 import Home from './components/Home';
+import Courses from './pages/Courses';
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
 import './styles/App.css';
@@ -17,6 +18,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/courses" element={<Courses />} />
           </Routes>
         </div>
       </Router>

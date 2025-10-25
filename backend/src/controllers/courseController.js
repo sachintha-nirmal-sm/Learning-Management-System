@@ -79,7 +79,12 @@ exports.getAllCourses = async (req, res) => {
     const { category, level, search, sort, page = 1, limit = 10 } = req.query;
 
     // Build query
-    let query = { status: 'published' };
+    let query = {
+      $or: [
+        { status: { $in: ['published', 'approved'] } },
+        { status: { $exists: false } }
+      ]
+    };
 
     if (category) {
       query.category = category;
