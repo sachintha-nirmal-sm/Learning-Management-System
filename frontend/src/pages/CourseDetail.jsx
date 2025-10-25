@@ -97,15 +97,6 @@ const CourseDetail = () => {
         cancelPath: `/courses/${id}`
       });
 
-      if (data?.simulated) {
-        setIsEnrolled(true);
-        if (data?.message) {
-          alert(data.message);
-        }
-        navigate(data?.redirect || `/learn/${id}`);
-        return;
-      }
-
       if (data.url) {
         window.location.href = data.url;
         return;

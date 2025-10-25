@@ -25,53 +25,12 @@ const buildCancelUrl = (req, course) => {
   return `${origin}${cancelPath}`;
 };
 
-const enrollStudent = async ({ course, studentId, amount, statusNote }) => {
-  let enrollment = await Enrollment.findOne({ student: studentId, course: course._id });
-
-  if (!enrollment) {
-    enrollment = await Enrollment.create({
-      student: studentId,
-      course: course._id,
-      payment: {
-        amount,
-        currency: 'USD',
-        status: 'completed',
-        paidAt: new Date()
-      }
-    });
-
-    await Course.findByIdAndUpdate(course._id, {
-      $addToSet: { enrolledStudents: studentId }
-    });
-
-    await User.findByIdAndUpdate(studentId, {
-      $addToSet: { enrolledCourses: course._id }
-    });
-  }
-
-  const paymentRecord = await Payment.create({
-    student: studentId,
-    course: course._id,
-    amount,
-    currency: 'usd',
-    stripeSessionId: statusNote || `offline_${Date.now()}`,
-    status: 'paid'
-  });
-
-  enrollment.payment = {
-    paymentId: paymentRecord._id.toString(),
-    amount,
-    currency: 'USD',
-    status: 'completed',
-    paidAt: new Date()
-  };
-  await enrollment.save();
-
-  return { enrollment, paymentRecord };
-};
-
 exports.createCheckoutSession = async (req, res) => {
   try {
+    if (!stripe) {
+      return res.status(500).json({ message: 'Stripe is not configured. Please contact the administrator.' });
+    }
+
     const { courseId } = req.body;
 
     if (!courseId) {
@@ -96,24 +55,6 @@ exports.createCheckoutSession = async (req, res) => {
     const alreadyEnrolled = await Enrollment.findOne({ student: req.user._id, course: courseId });
     if (alreadyEnrolled) {
       return res.status(400).json({ message: 'Already enrolled in this course' });
-    }
-
-    if (!stripe) {
-      const { enrollment, paymentRecord } = await enrollStudent({
-        course,
-        studentId: req.user._id,
-        amount: course.price,
-        statusNote: 'stripe_disabled'
-      });
-
-      return res.status(200).json({
-        success: true,
-        enrollment,
-        paymentId: paymentRecord._id,
-        simulated: true,
-        message: 'Stripe is not configured. Enrollment completed without payment processor.',
-        redirect: `/learn/${course._id}`
-      });
     }
 
     const session = await stripe.checkout.sessions.create({
@@ -156,7 +97,7 @@ exports.createCheckoutSession = async (req, res) => {
     });
   } catch (error) {
     console.error('Stripe session error:', error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: error.message || 'Failed to create payment session.' });
   }
 };
 
