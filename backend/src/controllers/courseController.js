@@ -136,6 +136,68 @@ exports.getAllCourses = async (req, res) => {
   }
 };
 
+// @desc    Get most popular courses by enrollment count
+// @route   GET /api/courses/popular
+// @access  Public
+exports.getPopularCourses = async (req, res) => {
+  try {
+    const limit = Math.max(parseInt(req.query.limit, 10) || 3, 1);
+
+    const matchStage = {
+      $match: {
+        $or: [
+          { status: { $in: ['published', 'approved'] } },
+          { status: { $exists: false } }
+        ]
+      }
+    };
+
+    const pipeline = [
+      matchStage,
+      {
+        $addFields: {
+          enrolledCount: { $size: { $ifNull: ['$enrolledStudents', []] } }
+        }
+      },
+      { $sort: { enrolledCount: -1, createdAt: -1 } },
+      { $limit: limit },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'instructor',
+          foreignField: '_id',
+          as: 'instructor',
+          pipeline: [
+            {
+              $project: {
+                name: 1,
+                email: 1,
+                avatar: 1
+              }
+            }
+          ]
+        }
+      },
+      {
+        $unwind: {
+          path: '$instructor',
+          preserveNullAndEmptyArrays: true
+        }
+      }
+    ];
+
+    const courses = await Course.aggregate(pipeline);
+
+    res.status(200).json({
+      success: true,
+      count: courses.length,
+      courses
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @desc    Get single course by ID
 // @route   GET /api/courses/:id
 // @access  Public

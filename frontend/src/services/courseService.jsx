@@ -7,6 +7,11 @@ const courseService = {
     return response.data;
   },
 
+  getPopularCourses: async (params = {}) => {
+    const response = await api.get('/courses/popular', { params });
+    return response.data;
+  },
+
   // Get single course
   getCourse: async (id) => {
     const response = await api.get(`/courses/${id}`);

@@ -8,6 +8,7 @@ const {
   deleteCourse,
   getInstructorCourses,
   getPendingCourses,
+  getPopularCourses,
   getCourseContent,
   addLecture,
   updateLecture,
@@ -22,6 +23,7 @@ const { protect, authorize } = require('../middleware/auth');
 
 // Public routes
 router.get('/', getAllCourses);
+router.get('/popular', getPopularCourses);
 router.get('/instructor/my-courses', protect, authorize('instructor', 'admin'), getInstructorCourses);
 router.get('/admin/pending', protect, authorize('admin'), getPendingCourses);
 router.get('/:id/content', protect, getCourseContent);

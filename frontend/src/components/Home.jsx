@@ -11,26 +11,22 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
 
   const categories = ['All', 'Programming', 'Design', 'Business', 'Marketing', 'Photography', 'Music', 'Other'];
 
   useEffect(() => {
     fetchCourses();
-  }, [selectedCategory]);
+  }, []);
 
   const fetchCourses = async () => {
     try {
       setLoading(true);
-      const params = {};
-      if (selectedCategory && selectedCategory !== 'All') {
-        params.category = selectedCategory;
-      }
-      const data = await courseService.getAllCourses(params);
+      const data = await courseService.getPopularCourses({ limit: 3 });
       setCourses(Array.isArray(data.courses) ? data.courses : []);
       setError('');
     } catch (err) {
-      setError('Failed to load courses');
+      setError('Failed to load popular courses');
       console.error(err);
       setCourses([]);
     } finally {
@@ -38,10 +34,14 @@ const Home = () => {
     }
   };
 
-  const filteredCourses = courses.filter(course =>
-    (course.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (course.description || '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredCourses = courses
+    .filter((course) =>
+      (course.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (course.description || '').toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .filter((course) =>
+      selectedCategory === 'All' ? true : course.category === selectedCategory
+    );
 
   return (
     <div className="home">
@@ -71,7 +71,7 @@ const Home = () => {
               <button
                 key={category}
                 className={`category-btn ${selectedCategory === category ? 'active' : ''}`}
-                onClick={() => setSelectedCategory(category === 'All' ? '' : category)}
+                onClick={() => setSelectedCategory(category)}
               >
                 {category}
               </button>
