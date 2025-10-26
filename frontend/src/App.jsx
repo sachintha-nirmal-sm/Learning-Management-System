@@ -6,6 +6,8 @@ import Home from './components/Home';
 import Courses from './pages/Courses';
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
+import Courses from './pages/Courses';
+import Courses from './pages/Courses';
 import './styles/App.css';
 
 function App() {
@@ -36,6 +38,7 @@ import Navbar from './components/common/Navbar';
 import Home from './components/Home';
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
+import Courses from './pages/Courses';
 import StudentDashboard from './pages/StudentDashboard';
 import InstructorDashboard from './pages/InstructorDashboard';
 import CreateCourse from './pages/CreateCourse';
@@ -58,6 +61,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/courses" element={<Courses />} />
             <Route path="/courses/:id" element={<CourseDetail />} />
             <Route
               path="/learn/:courseId"
