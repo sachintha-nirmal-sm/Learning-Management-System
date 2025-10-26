@@ -1,4 +1,4 @@
-const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+const stripeSecretKey = (process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRETE_KEY || '').trim();
 const stripe = stripeSecretKey ? require('stripe')(stripeSecretKey) : null;
 const Course = require('../models/course');
 const Enrollment = require('../models/enrollment');
@@ -28,7 +28,9 @@ const buildCancelUrl = (req, course) => {
 exports.createCheckoutSession = async (req, res) => {
   try {
     if (!stripe) {
-      return res.status(500).json({ message: 'Stripe is not configured. Please contact the administrator.' });
+      return res.status(500).json({
+        message: 'Stripe is not configured. Please verify STRIPE_SECRET_KEY on the server.'
+      });
     }
 
     const { courseId } = req.body;

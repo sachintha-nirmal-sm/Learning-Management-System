@@ -1,0 +1,5 @@
+- [x] inspect AdminDashboard component and services for stats data
+- [x] design chart section requirements and choose chart lib (fallback to minimal custom chart if no lib)
+- [x] implement graphs after stats grid (data fetch, components, styling)
+- [x] verify build/tests
+- [x] add admin sidebar with sections and scroll highlighting
