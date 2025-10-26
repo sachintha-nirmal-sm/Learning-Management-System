@@ -1,8 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { jsPDF } from 'jspdf';
+import { useAuth } from '../../context/AuthContext';
 import '../../styles/EnrolledCourseCard.css';
 
 const EnrolledCourseCard = ({ enrollment }) => {
+  const { user } = useAuth();
   const { course, enrolledAt } = enrollment;
   const progressPercentage = enrollment.progress?.percentageCompleted || 0;
   const completedLectures = enrollment.progress?.completedLectures || [];
@@ -19,6 +22,84 @@ const EnrolledCourseCard = ({ enrollment }) => {
     if (progressPercentage === 100) return '#27ae60';
     if (progressPercentage >= 50) return '#f39c12';
     return '#667eea';
+  };
+
+  const handleDownloadCertificate = () => {
+    if (!course?.title) {
+      return;
+    }
+
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+
+    // Background frame
+  doc.setFillColor(248, 245, 255);
+    doc.rect(36, 36, pageWidth - 72, pageHeight - 72, 'F');
+
+  doc.setDrawColor(91, 99, 183);
+    doc.setLineWidth(4);
+    doc.rect(54, 54, pageWidth - 108, pageHeight - 108);
+
+    // Header
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(28);
+  doc.setTextColor(91, 99, 183);
+    doc.text('LMS Certificate of Completion', pageWidth / 2, 120, { align: 'center' });
+
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(111, 115, 147);
+    doc.text('This is to certify that', pageWidth / 2, 180, { align: 'center' });
+
+    // Student name
+    const studentName = user?.name || user?.username || 'Valued Student';
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(32);
+  doc.setTextColor(31, 31, 61);
+    doc.text(studentName, pageWidth / 2, 230, { align: 'center' });
+
+    // Course name
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(16);
+  doc.setTextColor(111, 115, 147);
+    doc.text('has successfully completed the course', pageWidth / 2, 280, { align: 'center' });
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(24);
+  doc.setTextColor(91, 99, 183);
+    doc.text(course.title, pageWidth / 2, 325, { align: 'center' });
+
+    // Additional details
+    const completionDate = new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(14);
+  doc.setTextColor(111, 115, 147);
+    doc.text(`Completion Date: ${completionDate}`, pageWidth / 2, 380, { align: 'center' });
+
+    if (course?.instructor?.name) {
+      doc.text(`Instructor: ${course.instructor.name}`, pageWidth / 2, 410, { align: 'center' });
+    }
+
+    // Footer signature line
+    const footerY = pageHeight - 130;
+    doc.setDrawColor('#5b63b7');
+    doc.setLineWidth(1.2);
+    doc.line(pageWidth / 2 - 120, footerY, pageWidth / 2 + 120, footerY);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.text('Learning Management System', pageWidth / 2, footerY + 20, { align: 'center' });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(12);
+    doc.text('Official Seal', pageWidth / 2, footerY + 40, { align: 'center' });
+
+    const fileName = `${course.title.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-certificate.pdf`;
+    doc.save(fileName);
   };
 
   return (
@@ -91,7 +172,7 @@ const EnrolledCourseCard = ({ enrollment }) => {
               >
                 Review Course
               </Link>
-              <button className="btn-certificate">
+              <button type="button" className="btn-certificate" onClick={handleDownloadCertificate}>
                 🏆 Get Certificate
               </button>
             </>
