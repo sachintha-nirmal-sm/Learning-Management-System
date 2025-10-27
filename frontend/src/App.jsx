@@ -34,21 +34,21 @@ export default App;*/
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
-import Navbar from './components/common/Navbar';
-import Home from './components/Home';
-import Login from './components/auth/Login';
-import Register from './components/auth/Register';
-import Courses from './pages/Courses';
-import StudentDashboard from './pages/StudentDashboard';
-import InstructorDashboard from './pages/InstructorDashboard';
-import CreateCourse from './pages/CreateCourse';
-import CourseDetail from './pages/CourseDetail';
-import ManageLectures from './pages/ManageLectures';
-import CoursePlayer from './pages/CoursePlayer';
-import AdminDashboard from './pages/AdminDashboard';
-import PaymentSuccess from './pages/PaymentSuccess';
-import Profile from './pages/Profile';
-import ProtectedRoute from './components/common/ProtectedRoute';
+import Navbar from './components/common/Navbar.jsx';
+import Home from './components/Home.jsx';
+import Login from './components/auth/Login.jsx';
+import Register from './components/auth/Register.jsx';
+import Courses from './pages/Courses.jsx';
+import StudentDashboard from './pages/StudentDashboard.jsx';
+import InstructorDashboard from './pages/InstructorDashboard.jsx';
+import CreateCourse from './pages/CreateCourse.jsx';
+import CourseDetail from './pages/CourseDetail.jsx';
+import ManageLectures from './pages/ManageLectures.jsx';
+import CoursePlayer from './pages/CoursePlayer.jsx';
+import AdminDashboard from './pages/AdminDashboard.jsx';
+import PaymentSuccess from './pages/PaymentSuccess.jsx';
+import Profile from './pages/Profile.jsx';
+import ProtectedRoute from './components/common/ProtectedRoute.jsx';
 import './styles/App.css';
 
 function App() {
