@@ -198,16 +198,7 @@ const CourseDetail = () => {
               <h2 className="price">${coursePrice.toFixed(2)}</h2>
             )}
 
-            {isOwner ? (
-              <div className="owner-actions">
-                <Link to={`/instructor/edit-course/${course._id}`} className="btn-enroll">
-                  Edit Course
-                </Link>
-                <Link to={`/instructor/courses/${course._id}/lectures`} className="btn-secondary">
-                  Manage Lectures
-                </Link>
-              </div>
-            ) : isEnrolled ? (
+            {isOwner ? null : isEnrolled ? (
               <div className="owner-actions">
                 <Link to={`/learn/${course._id}`} className="btn-enroll">
                   Continue Learning
